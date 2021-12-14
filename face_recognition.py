@@ -2,20 +2,17 @@ import cv2
 import io
 import numpy as np 
 import picamera
-import time
-from gpiozero import Robot
 
 #顔検出の学習済みモデルファイル
 cascade_path = "./haarcascade_frontalface_default.xml"
 
-stream = io.BytesIO()#バイナリデータ
+stream = io.BytesIO()#バイナリデータs
 camera= picamera.PiCamera()#カメラのインスタンス
 camera.resolution = (256,256)#解像度
 camera.hflip = True#左右反転
 camera.vflip = True#上下反転
 
-end_time=time.time()+10#現在の時刻+10[秒]
-while(time.time()<end_time):
+while(True):
     camera.capture(stream, format="jpeg")
     data = np.frombuffer(stream.getvalue(),dtype = np.uint8)
     stream.seek(0)
@@ -26,14 +23,21 @@ while(time.time()<end_time):
     #カスケード分類器の特徴量を取得する
     cascade = cv2.CascadeClassifier(cascade_path)
 
-    #検知
+    #物体認識（顔認識）の実行
+    #image – CV_8U 型の行列．ここに格納されている画像中から物体が検出されます
+    #objects – 矩形を要素とするベクトル．それぞれの矩形は，検出した物体を含みます
+    #scaleFactor – 各画像スケールにおける縮小量を表します
+    #minNeighbors – 物体候補となる矩形は，最低でもこの数だけの近傍矩形を含む必要があります
+    #flags – このパラメータは，新しいカスケードでは利用されません．古いカスケードに対しては，cvHaarDetectObjects 関数の場合と同じ意味を持ちます
+    #minSize – 物体が取り得る最小サイズ．これよりも小さい物体は無視されます
     facerect = cascade.detectMultiScale(image_gray, scaleFactor=1.1, minNeighbors=2, minSize=(30, 30))
 
     #print(facerect)
     color = (255, 255, 255) #白
 
     # 検出した場合
-    if len(facerect)>0:
+    if len(facerect) > 0:
+
         
         #検出した顔を四角形で囲む(最終的にはいらない)
         for rect in facerect:
